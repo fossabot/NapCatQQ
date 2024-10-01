@@ -96,7 +96,6 @@ export class OneBotGroupApi {
                     if (GroupIncreaseEvent) return GroupIncreaseEvent;
                 }
 
-                //代码歧义 GrayTipElementSubType.MEMBER_NEW_TITLE
                 else if (element.grayTipElement.subElementType == NTGrayTipElementSubTypeV2.GRAYTIP_ELEMENT_SUBTYPE_JSON) {
                     const json = JSON.parse(element.grayTipElement.jsonGrayTipElement.jsonStr);
                     if (element.grayTipElement.jsonGrayTipElement.busiId == 1061) {
@@ -139,7 +138,6 @@ export class OneBotGroupApi {
                         // 获取MsgSeq+Peer可获取具体消息
                     }
                     if (element.grayTipElement.jsonGrayTipElement.busiId == 2407) {
-                        //下面得改 上面也是错的grayTipElement.subElementType == GrayTipElementSubType.MEMBER_NEW_TITLE
                         const type = json.items[json.items.length - 1]?.txt;
                         switch (type) {
                         case "头衔": {
@@ -207,7 +205,6 @@ export class OneBotGroupApi {
             while ((match = regex.exec(xmlElement.content)) !== null) {
                 matches.push(match[1]);
             }
-            // log("新人进群匹配到的QQ号", matches)
             if (matches.length === 2) {
                 const [inviter, invitee] = matches;
                 return new OB11GroupIncreaseEvent(
@@ -289,7 +286,7 @@ export class OneBotGroupApi {
         }
         const replyMsg = replyMsgList[0];
         if (!replyMsg) {
-            this.core.context.logger.logError('解析表情回应消息失败: 未找到回应消息');
+            this.core.context.logger.logError.bind(this.core.context.logger)('解析表情回应消息失败: 未找到回应消息');
             return undefined;
         }
         return new OB11GroupMsgEmojiLikeEvent(

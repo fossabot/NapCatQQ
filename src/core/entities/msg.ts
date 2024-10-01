@@ -659,7 +659,8 @@ export interface GrayTipElement {
 export enum FaceType {
     normal = 1, // 小黄脸
     normal2 = 2, // 新小黄脸, 从faceIndex 222开始？
-    dice = 3  // 骰子
+    dice = 3,  // 骰子
+    poke = 5  // 拍一拍
 }
 
 export enum FaceIndex {
@@ -909,9 +910,24 @@ export interface RawMessage {
     peerUin: string;
 
     /**
+     * 好友备注（如果是好友消息）
+     */
+    remark?: string;
+
+    /**
+     * 群名（如果是群消息）
+     */
+    peerName: string;
+
+    /**
      * 发送者昵称（如果是好友消息）
      */
     sendNickName: string;
+
+    /**
+     * 发送者好友备注（如果是群消息并且有发送者好友）
+     */
+    sendRemarkName: string;
 
     /**
      * 发送者群名片（如果是群消息）

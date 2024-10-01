@@ -20,11 +20,11 @@ import { LogLevel, LogWrapper } from '@/common/log';
 import { NodeIKernelLoginService } from '@/core/services';
 import { QQBasicInfoWrapper } from '@/common/qq-basic-info';
 import { NapCatPathWrapper } from '@/common/path';
-import path from 'node:path';
+import path, { resolve } from 'node:path';
 import fs from 'node:fs';
 import { hostname, systemName, systemVersion } from '@/common/system';
 import { NTEventWrapper } from '@/common/event';
-import { DataSource, GroupMember, KickedOffLineInfo, SelfInfo, SelfStatusInfo } from '@/core/entities';
+import { ChatType, DataSource, GroupMember, KickedOffLineInfo, Peer, SelfInfo, SelfStatusInfo } from '@/core/entities';
 import { NapCatConfigLoader } from '@/core/helper/config';
 import os from 'node:os';
 import { NodeIKernelGroupListener, NodeIKernelMsgListener, NodeIKernelProfileListener } from '@/core/listeners';
@@ -102,7 +102,8 @@ export class NapCatCore {
         if (!fs.existsSync(this.NapCatTempPath)) {
             fs.mkdirSync(this.NapCatTempPath, { recursive: true });
         }
-        this.initNapCatCoreListeners().then().catch(this.context.logger.logError);
+
+        this.initNapCatCoreListeners().then().catch(this.context.logger.logError.bind(this.context.logger));
 
         this.context.logger.setFileLogEnabled(
             this.configLoader.configData.fileLog,
@@ -132,7 +133,7 @@ export class NapCatCore {
         const msgListener = new NodeIKernelMsgListener();
         msgListener.onKickedOffLine = (Info: KickedOffLineInfo) => {
             // 下线通知
-            this.context.logger.logError('[KickedOffLine] [' + Info.tipsTitle + '] ' + Info.tipsDesc);
+            this.context.logger.logError.bind(this.context.logger)('[KickedOffLine] [' + Info.tipsTitle + '] ' + Info.tipsDesc);
             this.selfInfo.online = false;
         };
         msgListener.onRecvMsg = (msgs) => {
@@ -253,7 +254,7 @@ export class NapCatCore {
 }
 
 export async function genSessionConfig(
-    guid:string,
+    guid: string,
     QQVersionAppid: string,
     QQVersion: string,
     selfUin: string,

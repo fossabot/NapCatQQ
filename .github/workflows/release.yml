@@ -93,40 +93,54 @@ jobs:
     needs: [ Build-LiteLoader,Build-Shell ]
     runs-on: ubuntu-latest
     steps:
-      - name: Download All Artifact
-        uses: actions/download-artifact@v4
-      # - name: Compress subdirectories
-      #   run: |
-      #     cd ./NapCat.Shell/
-      #     zip -q -r NapCat.Shell.zip *
-      #     cd ..
-      #     rm ./NapCat.Shell.zip -rf
-      #     mv ./NapCat.Shell/NapCat.Shell.zip ./
-      - name: Compress subdirectories
-        run: |
-          cd ./NapCat.Shell/
-          zip -q -r NapCat.Shell.zip *
-          cd ..
-          cd ./NapCat.Framework/
-          zip -q -r NapCat.Framework.zip *
-          cd ..
-          rm ./NapCat.Shell.zip -rf
-          rm ./NapCat.Framework.zip -rf
-          mv ./NapCat.Shell/NapCat.Shell.zip ./
-          mv ./NapCat.Framework/NapCat.Framework.zip ./
-      - name: Extract version from tag
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
-      - name: Clone Changes Log
-        run: curl -o CHANGELOG.md https://fastly.jsdelivr.net/gh/NapNeko/NapCatQQ@main/docs/changelogs/CHANGELOG.v${{ env.VERSION }}.md
+    - name: Clone Main Repository
+      uses: actions/checkout@v4
+      with:
+            repository: 'NapNeko/NapCatQQ'
+            submodules: true
+            ref: main
+            token: ${{ secrets.NAPCAT_BUILD }}
 
-      - name: Create Release Draft and Upload Artifacts
-        uses: softprops/action-gh-release@v1
-        with:
-          name: NapCat V${{ env.VERSION }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          body_path: CHANGELOG.md
-          files: |
-            NapCat.Framework.zip
-            NapCat.Shell.zip
-          draft: true
+    - name: Download All Artifact
+      uses: actions/download-artifact@v4
+
+    - name: Compress subdirectories
+      run: |
+        cd ./NapCat.Shell/
+        zip -q -r NapCat.Shell.zip *
+        cd ..
+        cd ./NapCat.Framework/
+        zip -q -r NapCat.Framework.zip *
+        cd ..
+        rm ./NapCat.Shell.zip -rf
+        rm ./NapCat.Framework.zip -rf
+        mv ./NapCat.Shell/NapCat.Shell.zip ./
+        mv ./NapCat.Framework/NapCat.Framework.zip ./
+
+        mkdir ./NapCat.Framework.Windows.Once
+        unzip -q ./external/LiteLoaderWrapper.zip -d ./NapCat.Framework.Windows.Once
+        cd ./NapCat.Framework.Windows.Once
+        ls 
+        mkdir -p ./LL/plugins/NapCatQQ
+        unzip -q ../NapCat.Framework.zip -d ./LL/plugins/NapCatQQ
+        zip -q -r NapCat.Framework.Windows.Once.zip *
+        cd ..
+        mv ./NapCat.Framework.Windows.Once/NapCat.Framework.Windows.Once.zip ./
+    - name: Extract version from tag
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+    - name: Clone Changes Log
+      run: curl -o CHANGELOG.md https://fastly.jsdelivr.net/gh/NapNeko/NapCatQQ@main/docs/changelogs/CHANGELOG.v${{ env.VERSION }}.md
+
+    - name: Create Release Draft and Upload Artifacts
+      uses: softprops/action-gh-release@v1
+      with:
+        name: NapCat V${{ env.VERSION }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        body_path: CHANGELOG.md
+        files: |
+          NapCat.Framework.zip
+          NapCat.Shell.zip
+          NapCat.Framework.Windows.Once.zip
+        draft: true
