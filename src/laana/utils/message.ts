@@ -10,8 +10,7 @@ import {
     SendTextElement,
 } from '@/core';
 import { NapCatLaanaAdapter } from '..';
-import { OutgoingMessage, SendMessagePing } from '../types/action/message';
-import { Bubble, Message as LaanaMessage, Peer as LaanaPeer, Peer_Type } from '../types/entity/message';
+import { LaanaPeer, LaanaMessage, LaanaPeer_Type, OutgoingMessage, SendMessagePing, LaanaMessage_Bubble } from '@laana-proto/def';
 import { File } from '../types/entity/file';
 import faceConfig from '@/core/external/face_config.json';
 import { MessageContext } from '@/onebot/api';
@@ -106,7 +105,7 @@ export class LaanaMessageUtils {
                         },
                     });
                 } else if (content.oneofKind === 'at') {
-                    if (params.targetPeer?.type !== Peer_Type.GROUP) {
+                    if (params.targetPeer?.type !== LaanaPeer_Type.GROUP) {
                         throw Error('试图在私聊会话中使用 At');
                     }
 
@@ -279,14 +278,14 @@ export class LaanaMessageUtils {
     }
 
     async laanaPeerToRaw(peer: LaanaPeer): Promise<Peer> {
-        const peerUid = peer.type === Peer_Type.BUDDY ?
+        const peerUid = peer.type === LaanaPeer_Type.BUDDY ?
             await this.core.apis.UserApi.getUidByUinV2(peer.uin) :
             peer.uin;
         if (!peerUid) {
             throw Error('查询用户 UID 失败');
         }
         return {
-            chatType: peer.type === Peer_Type.GROUP ? ChatType.KCHATTYPEGROUP : ChatType.KCHATTYPEC2C,
+            chatType: peer.type === LaanaPeer_Type.GROUP ? ChatType.KCHATTYPEGROUP : ChatType.KCHATTYPEC2C,
             guildId: '',
             peerUid,
         };
@@ -312,7 +311,7 @@ export class LaanaMessageUtils {
             peer: {
                 uin: msg.peerUin,
                 type: msg.chatType === ChatType.KCHATTYPEGROUP ?
-                    Peer_Type.GROUP : Peer_Type.BUDDY,
+                    LaanaPeer_Type.GROUP : LaanaPeer_Type.BUDDY,
             },
             content: await this.createLaanaMessageContent(msg, rootForwardMsgId),
         };
@@ -344,7 +343,7 @@ export class LaanaMessageUtils {
                 repliedMsgId = await this.getRepliedMsgId(firstElement.replyElement, msg);
                 startingIndex = 1;
             }
-            const bubble: Bubble = { segments: [], repliedMsgId };
+            const bubble: LaanaMessage_Bubble = { segments: [], repliedMsgId };
             for (let i = startingIndex; i < msg.elements.length; i++) {
                 const element = msg.elements[i];
                 if (element.textElement) {

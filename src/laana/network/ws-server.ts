@@ -1,11 +1,9 @@
 import { ILaanaNetworkAdapter } from '../network/index';
 import { NapCatLaanaAdapter } from '..';
-import { LaanaDataWrapper } from '../types/laana';
-import { EventWrapper } from '../types/event/wrapper';
 import { RawData, WebSocket, WebSocketServer } from 'ws';
 import { Mutex } from 'async-mutex';
 import { NapCatCore } from '@/core';
-import { Message as LaanaMessage } from '../types/entity/message';
+import { LaanaDataWrapper, LaanaMessage, LaanaEventWrapper } from '@laana-proto/def';
 
 export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
     wsServer: WebSocketServer;
@@ -122,7 +120,7 @@ export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
         });
     }
 
-    onEvent(event: EventWrapper) {
+    onEvent(event: LaanaEventWrapper) {
         this.wsClientsMutex.runExclusive(() => {
             this.wsClients.forEach(wsClient => {
                 this.checkStateAndReply(LaanaDataWrapper.toBinary({

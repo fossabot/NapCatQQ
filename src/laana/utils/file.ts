@@ -1,6 +1,6 @@
 import { ChatType, NapCatCore } from '@/core';
 import { NapCatLaanaAdapter } from '..';
-import { File as LaanaFile } from '../types/entity/file';
+import { LaanaFile } from '@laana-proto/def';
 import path from 'path';
 import fs from 'fs';
 import fsPromises from 'fs/promises';

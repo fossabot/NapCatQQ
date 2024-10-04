@@ -1,12 +1,11 @@
 import { NapCatLaanaAdapter } from '..';
-import { EventWrapper } from '../types/event/wrapper';
 import { randomUUID } from 'crypto';
-import { Message as LaanaMessage } from '../types/entity/message';
+import { LaanaEventWrapper, LaanaMessage } from '@laana-proto/def';
 
 export interface ILaanaNetworkAdapter {
     laana: NapCatLaanaAdapter;
 
-    onEvent(event: EventWrapper): void;
+    onEvent(event: LaanaEventWrapper): void;
 
     onMessage(message: LaanaMessage): void;
 
@@ -22,7 +21,7 @@ export class LaanaNetworkManager {
         return Promise.all(this.adapters.map(adapter => adapter.open()));
     }
 
-    emitEvent<T extends Exclude<EventWrapper['event']['oneofKind'], undefined>>(
+    emitEvent<T extends Exclude<LaanaEventWrapper['event']['oneofKind'], undefined>>(
         eventName: T,
         // eslint-disable-next-line
         // @ts-ignore

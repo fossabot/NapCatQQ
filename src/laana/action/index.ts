@@ -1,18 +1,18 @@
-import { ActionPing, ActionPong } from '../types/action/wrapper';
+import { LaanaActionPing, LaanaActionPong } from '@laana-proto/def';
 
-type ExtractFromPongOrVoid<key> = Extract<ActionPong['pong'], { oneofKind: key; }> extends never ?
+type ExtractFromPongOrVoid<key> = Extract<LaanaActionPong['pong'], { oneofKind: key; }> extends never ?
     void :
     // eslint-disable-next-line
     // @ts-ignore
-    Extract<ActionPong['pong'], { oneofKind: key; }>[key];
+    Extract<LaanaActionPong['pong'], { oneofKind: key; }>[key];
 
 type LaanaActionMapping = {
-    [key in Exclude<ActionPing['ping']['oneofKind'], undefined>]:
+    [key in Exclude<LaanaActionPing['ping']['oneofKind'], undefined>]:
     (
         params:
             // eslint-disable-next-line
             // @ts-ignore
-            Extract<ActionPing['ping'], { oneofKind: key; }>[key]
+            Extract<LaanaActionPing['ping'], { oneofKind: key; }>[key]
     ) => PromiseLike<ExtractFromPongOrVoid<key>>;
 };
 
