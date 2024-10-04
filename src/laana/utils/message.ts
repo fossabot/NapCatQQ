@@ -14,6 +14,7 @@ import { OutgoingMessage, SendMessagePing } from '../types/action/message';
 import { Bubble, Message as LaanaMessage, Peer as LaanaPeer, Peer_Type } from '../types/entity/message';
 import { File } from '../types/entity/file';
 import faceConfig from '@/core/external/face_config.json';
+import { MessageContext } from '@/onebot/api';
 
 export type SentMessageFileCacheRecord = {
     originalType: File['uri']['oneofKind'],
@@ -38,6 +39,14 @@ export class LaanaMessageUtils {
         public core: NapCatCore,
         public laana: NapCatLaanaAdapter,
     ) {
+    }
+
+    // TODO: deprecate MessageContext
+    private createEmptyMessageContext(): MessageContext {
+        return {
+            deleteAfterSentFiles: [],
+            peer: { chatType: ChatType.KCHATTYPEC2C, guildId: '', peerUid: '' },
+        };
     }
 
     l2r: Laana2RawConverters = {
@@ -159,6 +168,7 @@ export class LaanaMessageUtils {
                 } else if (content.oneofKind === 'image') {
                     const cacheId = await this.laana.utils.file.resolveCacheIdFromLaanaFile(content.image);
                     elements.push(await this.core.apis.FileApi.createValidSendPicElement(
+                        this.createEmptyMessageContext(),
                         await this.laana.utils.file.toLocalPath(cacheId)
                     ));
                     fileCacheRecords.push({
@@ -178,6 +188,7 @@ export class LaanaMessageUtils {
             return {
                 elements: [
                     await this.core.apis.FileApi.createValidSendFileElement(
+                        this.createEmptyMessageContext(),
                         await this.laana.utils.file.toLocalPath(cacheId),
                         msgContent.name,
                     ),
@@ -194,6 +205,7 @@ export class LaanaMessageUtils {
             return {
                 elements: [
                     await this.core.apis.FileApi.createValidSendPicElement(
+                        this.createEmptyMessageContext(),
                         await this.laana.utils.file.toLocalPath(cacheId),
                         msgContent.displayText, // TODO: make display text optional
                         // TODO: add 'sub type' field
@@ -224,6 +236,7 @@ export class LaanaMessageUtils {
             return {
                 elements: [
                     await this.core.apis.FileApi.createValidSendVideoElement(
+                        this.createEmptyMessageContext(),
                         await this.laana.utils.file.toLocalPath(cacheId),
                         // TODO: add file name and thumb path
                     ),
