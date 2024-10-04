@@ -32,7 +32,8 @@ export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
                 return;
             }
 
-            wsClient.on('error', (err) => this.core.context.logger.log('[OneBot] [WebSocket Server] Client Error:', err.message));
+            wsClient.on('error', (err) =>
+                this.core.context.logger.log('连接出现错误', err.message));
 
             wsClient.on('message', (message) => {
                 let binaryData: Uint8Array;
