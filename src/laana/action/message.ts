@@ -2,11 +2,7 @@ import { NapCatLaanaAdapter } from '..';
 import { NapCatCore } from '@/core';
 import { LaanaActionHandler } from '../action';
 import fs from 'fs';
-import {
-    ForwardMessagePing_Operation,
-    LaanaPeer,
-    OutgoingMessage,
-} from '@laana-proto/def';
+import { ForwardMessagePing_Operation, LaanaPeer, OutgoingMessage } from '@laana-proto/def';
 
 export class LaanaMessageActionImpl {
     constructor(

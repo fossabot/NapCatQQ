@@ -3,7 +3,7 @@ import { NapCatLaanaAdapter } from '..';
 import { RawData, WebSocket, WebSocketServer } from 'ws';
 import { Mutex } from 'async-mutex';
 import { NapCatCore } from '@/core';
-import { LaanaDataWrapper, LaanaMessage, LaanaEventWrapper } from '@laana-proto/def';
+import { LaanaDataWrapper, LaanaEventWrapper, LaanaMessage } from '@laana-proto/def';
 
 export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
     wsServer: WebSocketServer;

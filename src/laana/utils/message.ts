@@ -11,13 +11,12 @@ import {
 } from '@/core';
 import { NapCatLaanaAdapter } from '..';
 import {
-    LaanaPeer,
+    LaanaFile,
     LaanaMessage,
+    LaanaMessage_Bubble,
+    LaanaPeer,
     LaanaPeer_Type,
     OutgoingMessage,
-    SendMessagePing,
-    LaanaMessage_Bubble,
-    LaanaFile,
 } from '@laana-proto/def';
 import faceConfig from '@/core/external/face_config.json';
 import { MessageContext } from '@/onebot/api';
