@@ -10,13 +10,20 @@ import {
     SendTextElement,
 } from '@/core';
 import { NapCatLaanaAdapter } from '..';
-import { LaanaPeer, LaanaMessage, LaanaPeer_Type, OutgoingMessage, SendMessagePing, LaanaMessage_Bubble } from '@laana-proto/def';
-import { File } from '../types/entity/file';
+import {
+    LaanaPeer,
+    LaanaMessage,
+    LaanaPeer_Type,
+    OutgoingMessage,
+    SendMessagePing,
+    LaanaMessage_Bubble,
+    LaanaFile,
+} from '@laana-proto/def';
 import faceConfig from '@/core/external/face_config.json';
 import { MessageContext } from '@/onebot/api';
 
 export type SentMessageFileCacheRecord = {
-    originalType: File['uri']['oneofKind'],
+    originalType: LaanaFile['uri']['oneofKind'],
     cacheId: string,
 };
 

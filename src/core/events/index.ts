@@ -11,7 +11,6 @@ import {
 } from '@/core';
 import { LRUCache } from '@/common/lru-cache';
 import { proxiedListenerOf } from '@/common/proxy-handler';
-import fastXmlParser from 'fast-xml-parser';
 import { NapCatInternalEvents } from './definition';
 import { NapCatCoreEventParser } from '@/core/events/parser';
 import { Mutex } from 'async-mutex';
