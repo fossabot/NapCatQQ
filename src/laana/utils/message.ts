@@ -33,7 +33,7 @@ type Laana2RawConverters = {
         // eslint-disable-next-line
         // @ts-ignore
         msgContent: Extract<OutgoingMessage['content'], { oneofKind: key; }>[key],
-        params: SendMessagePing,
+        targetPeer: LaanaPeer,
     ) => PromiseLike<{
         elements: SendMessageElement[],
         fileCacheRecords: SentMessageFileCacheRecord[],
@@ -56,7 +56,7 @@ export class LaanaMessageUtils {
     }
 
     l2r: Laana2RawConverters = {
-        bubble: async (msgContent, params) => {
+        bubble: async (msgContent, targetPeer) => {
             function at(atUid: string, atNtUid: string, atType: AtType, atName: string): SendTextElement {
                 return {
                     elementType: ElementType.TEXT,
@@ -77,7 +77,7 @@ export class LaanaMessageUtils {
             if (msgContent.repliedMsgId) {
                 const replyMsg = (
                     await this.core.apis.MsgApi.getMsgsByMsgId(
-                        await this.laanaPeerToRaw(params.targetPeer!),
+                        await this.laanaPeerToRaw(targetPeer),
                         [msgContent.repliedMsgId]
                     )
                 ).msgList[0];
@@ -112,7 +112,7 @@ export class LaanaMessageUtils {
                         },
                     });
                 } else if (content.oneofKind === 'at') {
-                    if (params.targetPeer?.type !== LaanaPeer_Type.GROUP) {
+                    if (targetPeer.type !== LaanaPeer_Type.GROUP) {
                         throw Error('试图在私聊会话中使用 At');
                     }
 
@@ -125,7 +125,7 @@ export class LaanaMessageUtils {
                     }
 
                     const atMember = await this.core.apis.GroupApi
-                        .getGroupMember(params.targetPeer.uin, content.at.uin);
+                        .getGroupMember(targetPeer.uin, content.at.uin);
                     if (atMember) {
                         elements.push(at(
                             content.at.uin,
@@ -298,7 +298,7 @@ export class LaanaMessageUtils {
         };
     }
 
-    async laanaMessageToRaw(msg: OutgoingMessage, params: SendMessagePing) {
+    async laanaMessageToRaw(msg: OutgoingMessage, targetPeer: LaanaPeer) {
         if (!msg.content.oneofKind) {
             throw Error('消息内容类型未知');
         }
@@ -306,7 +306,7 @@ export class LaanaMessageUtils {
             // eslint-disable-next-line
             // @ts-ignore
             msg.content[msg.content.oneofKind],
-            params
+            targetPeer
         );
     }
 
