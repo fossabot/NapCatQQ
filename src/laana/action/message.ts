@@ -8,13 +8,13 @@ import {
     OutgoingMessage,
 } from '@laana-proto/def';
 
-export class LaanaMessageActionHandler {
+export class LaanaMessageActionImpl {
     constructor(
         public core: NapCatCore,
         public laana: NapCatLaanaAdapter,
     ) {}
 
-    impl: LaanaActionHandler = {
+    handler: LaanaActionHandler = {
         sendMessage: async (params) => {
             return { msgId: await this.sendMessage(params.message!, params.targetPeer!) };
         },

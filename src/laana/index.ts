@@ -3,7 +3,7 @@ import { NapCatPathWrapper } from '@/common/path';
 import { LaanaFileUtils } from './utils/file';
 import { LaanaMessageUtils } from './utils/message';
 import { LaanaActionHandler } from './action';
-import { LaanaMessageActionHandler } from './action/message';
+import { LaanaMessageActionImpl } from './action/message';
 import { LaanaConfigLoader } from './config';
 import { LaanaNetworkManager } from './network';
 import { LaanaWsServerAdapter } from './network/ws-server';
@@ -23,7 +23,7 @@ export class NapCatLaanaAdapter {
         public pathWrapper: NapCatPathWrapper,
     ) {
         this.actions = {
-            ...new LaanaMessageActionHandler(this.core, this).impl,
+            ...new LaanaMessageActionImpl(this.core, this).handler,
         };
         this.configLoader = new LaanaConfigLoader(this.core, this.pathWrapper.configPath);
 
