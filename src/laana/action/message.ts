@@ -2,6 +2,7 @@ import { NapCatLaanaAdapter } from '..';
 import { NapCatCore } from '@/core';
 import { LaanaActionHandler } from '../action';
 import fs from 'fs';
+import { ForwardMessagePing_Operation } from '@laana-proto/def';
 
 export class LaanaMessageActionHandler {
     constructor(
@@ -120,19 +121,49 @@ export class LaanaMessageActionHandler {
             const { msgId, chatType, peerUid } = this.laana.utils.msg.decodeLaanaMsgId(params.msgId);
             try {
                 await this.core.apis.MsgApi.recallMsg(
-                    {
-                        chatType,
-                        peerUid,
-                        guildId: '',
-                    },
+                    { chatType, peerUid, guildId: '' },
                     msgId,
                 );
             } catch (e) {
                 throw new Error(`消息撤回失败: ${e}`);
             }
-            return {
-                success: true,
-            };
+            return { success: true };
+        },
+
+        markPeerMessageAsRead: async (params) => {
+            const { chatType, peerUid } = await this.laana.utils.msg.laanaPeerToRaw(params.peer!);
+            try {
+                await this.core.apis.MsgApi.setMsgRead({ chatType, peerUid });
+            } catch (e) {
+                throw new Error(`标记消息已读失败: ${e}`);
+            }
+            return { success: true };
+        },
+
+        forwardMessage: async (params) => {
+            if (params.msgIds.length === 0) {
+                throw new Error('消息 ID 列表不能为空');
+            }
+            const { chatType, peerUid } = this.laana.utils.msg.decodeLaanaMsgId(params.msgIds[0]);
+            const msgIdList = params.msgIds
+                .map(msgId => this.laana.utils.msg.decodeLaanaMsgId(msgId).msgId);
+            const destPeer = await this.laana.utils.msg.laanaPeerToRaw(params.targetPeer!);
+
+            if (params.operation === ForwardMessagePing_Operation.AS_SINGLETONS) {
+                const ret = await this.core.apis.MsgApi.forwardMsg(
+                    { chatType, peerUid, guildId: '' },
+                    destPeer,
+                    msgIdList,
+                );
+                if (ret.result !== 0) {
+                    throw new Error(`转发消息失败 ${ret.errMsg}`);
+                }
+            } else {
+                throw new Error('unimplemented');
+                // TODO: refactor NTQQMsgApi.multiForwardMsg
+            }
+
+            return { success: true };
         },
     };
 }
