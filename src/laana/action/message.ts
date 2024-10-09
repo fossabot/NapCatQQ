@@ -15,19 +15,6 @@ export class LaanaMessageActionImpl {
             return { msgId: await this.sendMessage(params.message!, params.targetPeer!) };
         },
 
-        sendPackedMessages: async (params) => {
-            // first send every single message to self, then forward them to target peer
-            const sendMsgIds: string[] = [];
-            for (const message of params.messages) {
-                sendMsgIds.push(await this.sendMessage(message, params.targetPeer!));
-            }
-            const packedMsgId = await this.forwardMessageAsPacked(sendMsgIds, params.targetPeer!);
-            return {
-                packedMsgId,
-                msgIds: sendMsgIds,
-            };
-        },
-
         getMessage: async (params) => {
             return { message: await this.getMessage(params.msgId) };
         },
