@@ -3,7 +3,7 @@ import { NapCatLaanaAdapter } from '..';
 import { RawData, WebSocket, WebSocketServer } from 'ws';
 import { Mutex } from 'async-mutex';
 import { NapCatCore } from '@/core';
-import { LaanaDataWrapper, LaanaEventWrapper, LaanaMessage } from '@laana-proto/def';
+import { LaanaDataWrapper, LaanaEventWrapper, LaanaMessage, LaanaServerSideHandshake_Result } from '@laana-proto/def';
 
 export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
     wsServer: WebSocketServer;
@@ -26,79 +26,47 @@ export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
             port: port,
             host: ip,
         });
-        this.wsServer.on('connection', async (wsClient) => {
+        this.wsServer.on('connection', async (wsClient, request) => {
             if (!this.isOpen) {
                 wsClient.close();
                 return;
             }
+            this.core.context.logger.log(`接收到来自 ${request.socket.remoteAddress} 的连接`);
 
             wsClient.on('error', (err) =>
                 this.core.context.logger.log('连接出现错误', err.message));
 
-            wsClient.on('message', (message) => {
-                let binaryData: Uint8Array;
-                if (message instanceof Buffer) {
-                    binaryData = message;
-                } else if (message instanceof ArrayBuffer) {
-                    binaryData = new Uint8Array(message);
-                } else { // message is an array of Buffers
-                    binaryData = Buffer.concat(message);
-                }
-                this.wsClientsMutex.runExclusive(async () => {
-                    const data = LaanaDataWrapper.fromBinary(
-                        Uint8Array.from(binaryData),
-                    );
-                    if (data.data.oneofKind === 'actionPing') {
-                        const actionName = data.data.actionPing.ping.oneofKind;
-                        if (actionName === undefined) {
-                            this.core.context.logger.logError('未知的动作名', actionName);
-                            return;
-                        }
-
-                        const actionHandler = this.laana.actions[actionName];
-                        if (!actionHandler) {
-                            this.core.context.logger.logError('未实现的动作名', actionName);
-                            return;
-                        }
-                        try {
-                            // eslint-disable-next-line
-                            // @ts-ignore
-                            const ret = await actionHandler(data.data.actionPing.ping[actionName]);
-                            this.checkStateAndReply(LaanaDataWrapper.toBinary({
-                                data: {
-                                    oneofKind: 'actionPong',
-                                    actionPong: {
-                                        clientPingId: data.data.actionPing.clientPingId,
-                                        // eslint-disable-next-line
-                                        // @ts-ignore
-                                        pong: {
-                                            oneofKind: actionName,
-                                            [actionName]: ret,
-                                        },
-                                    },
+            wsClient.once('message', (message) => {
+                const data = this.handleRawData(message);
+                if (data.data.oneofKind === 'clientSideHandshake') {
+                    // TODO: verify protocol version
+                    const token = data.data.clientSideHandshake.token;
+                    if (token !== this.token) {
+                        this.core.context.logger.logWarn(`与 ${request.socket.remoteAddress} 的客户端握手失败，token 不匹配`);
+                        this.checkStateAndReply(LaanaDataWrapper.toBinary({
+                            data: {
+                                oneofKind: 'serverSideHandshake',
+                                serverSideHandshake: {
+                                    serverVersion: '',
+                                    result: LaanaServerSideHandshake_Result.wrongToken,
                                 },
-                            }), wsClient);
-                        } catch (e: any) {
-                            this.core.context.logger.logError('处理动作时出现错误', e);
-                            this.checkStateAndReply(LaanaDataWrapper.toBinary({
-                                data: {
-                                    oneofKind: 'actionPong',
-                                    actionPong: {
-                                        clientPingId: data.data.actionPing.clientPingId,
-                                        pong: {
-                                            oneofKind: 'failed',
-                                            failed: {
-                                                reason: e.toString(),
-                                            }
-                                        },
-                                    },
-                                },
-                            }), wsClient);
-                        }
-                    } else {
-                        this.core.context.logger.logWarn('未知的数据包类型', data.data.oneofKind);
+                            },
+                        }), wsClient);
+                        wsClient.close();
+                        return;
                     }
-                }).catch((e) => this.core.context.logger.logError('处理请求时出现错误', e));
+
+                    this.checkStateAndReply(LaanaDataWrapper.toBinary({
+                        data: {
+                            oneofKind: 'serverSideHandshake',
+                            serverSideHandshake: {
+                                serverVersion: '',
+                                result: LaanaServerSideHandshake_Result.success,
+                            },
+                        },
+                    }), wsClient);
+                    this.addClient(wsClient);
+                }
             });
 
             wsClient.on('ping', () => {
@@ -109,10 +77,6 @@ export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
                 this.wsClientsMutex.runExclusive(async () => {
                     this.wsClients = this.wsClients.filter(client => client !== wsClient);
                 });
-            });
-
-            await this.wsClientsMutex.runExclusive(async () => {
-                this.wsClients.push(wsClient);
             });
         });
 
@@ -170,6 +134,78 @@ export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
             clearInterval(this.heartbeatIntervalId);
             this.heartbeatIntervalId = null;
         }
+    }
+
+    private handleRawData(message: RawData) {
+        let binaryData: Uint8Array;
+        if (message instanceof Buffer) {
+            binaryData = message;
+        } else if (message instanceof ArrayBuffer) {
+            binaryData = new Uint8Array(message);
+        } else { // message is an array of Buffers
+            binaryData = Buffer.concat(message);
+        }
+        return LaanaDataWrapper.fromBinary(binaryData);
+    }
+
+    private async addClient(wsClient: WebSocket) {
+        wsClient.on('message', (message) => {
+            const data = this.handleRawData(message);
+
+            if (data.data.oneofKind === 'actionPing') {
+                const actionName = data.data.actionPing.ping.oneofKind;
+                if (actionName === undefined) {
+                    this.core.context.logger.logError('未知的动作名', actionName);
+                    return;
+                }
+
+                const actionHandler = this.laana.actions[actionName];
+                if (!actionHandler) {
+                    this.core.context.logger.logError('未实现的动作名', actionName);
+                    return;
+                }
+                try {
+                    // eslint-disable-next-line
+                    // @ts-ignore
+                    const ret = await actionHandler(data.data.actionPing.ping[actionName]);
+                    this.checkStateAndReply(LaanaDataWrapper.toBinary({
+                        data: {
+                            oneofKind: 'actionPong',
+                            actionPong: {
+                                clientPingId: data.data.actionPing.clientPingId,
+                                // eslint-disable-next-line
+                                // @ts-ignore
+                                pong: {
+                                    oneofKind: actionName,
+                                    [actionName]: ret,
+                                },
+                            },
+                        },
+                    }), wsClient);
+                } catch (e: any) {
+                    this.core.context.logger.logError('处理动作时出现错误', e);
+                    this.checkStateAndReply(LaanaDataWrapper.toBinary({
+                        data: {
+                            oneofKind: 'actionPong',
+                            actionPong: {
+                                clientPingId: data.data.actionPing.clientPingId,
+                                pong: {
+                                    oneofKind: 'failed',
+                                    failed: {
+                                        reason: e.toString(),
+                                    },
+                                },
+                            },
+                        },
+                    }), wsClient);
+                }
+            } else {
+                this.core.context.logger.logWarn('未知的数据包类型', data.data.oneofKind);
+            }
+        });
+        await this.wsClientsMutex.runExclusive(async () => {
+            this.wsClients.push(wsClient);
+        });
     }
 
     private checkStateAndReply(data: RawData, wsClient: WebSocket) {
