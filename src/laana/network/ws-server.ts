@@ -155,7 +155,6 @@ export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
             if (data.data.oneofKind === 'actionPing') {
                 const actionName = data.data.actionPing.ping.oneofKind;
                 if (actionName === undefined) {
-                    this.core.context.logger.logError('未知的动作名', actionName);
                     return;
                 }
 
@@ -165,6 +164,7 @@ export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
                     return;
                 }
                 try {
+                    this.core.context.logger.logDebug('处理动作', actionName);
                     // eslint-disable-next-line
                     // @ts-ignore
                     const ret = await actionHandler(data.data.actionPing.ping[actionName]);
@@ -183,7 +183,7 @@ export class LaanaWsServerAdapter implements ILaanaNetworkAdapter {
                         },
                     }), wsClient);
                 } catch (e: any) {
-                    this.core.context.logger.logError('处理动作时出现错误', e);
+                    this.core.context.logger.logError(`处理动作 ${data.data.oneofKind} 时出现错误`, e);
                     this.checkStateAndReply(LaanaDataWrapper.toBinary({
                         data: {
                             oneofKind: 'actionPong',
