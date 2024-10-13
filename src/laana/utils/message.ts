@@ -508,8 +508,8 @@ export class LaanaMessageUtils {
                 };
             } else if (firstElement.multiForwardMsgElement) {
                 return {
-                    oneofKind: 'forwardMsgRef',
-                    forwardMsgRef: {
+                    oneofKind: 'forwardedMsgRef',
+                    forwardedMsgRef: {
                         refId: this.encodeMsgToForwardMsgRefId(
                             rootForwardMsgId ?? this.encodeMsgToLaanaMsgId(msg.msgId, msg.chatType, msg.peerUid),
                             msg.msgId,
@@ -559,7 +559,7 @@ export class LaanaMessageUtils {
         return `LaanaForwardMsgRefId|${rootMsgLaanaId}|${currentMsgId}`;
     }
 
-    decodeLaanaForwardMsgRefId(laanaForwardMsgId: string) {
+    decodeLaanaForwardedMsgRefId(laanaForwardMsgId: string) {
         if (!laanaForwardMsgId.startsWith('LaanaForwardMsgRefId|')) {
             throw Error('不合法的 LaanaForwardMsgRefId');
         }

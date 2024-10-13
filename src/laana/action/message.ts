@@ -160,7 +160,7 @@ export class LaanaMessageActionImpl {
      * @param refId The Laana-styled refId of the message.
      */
     async getForwardedMessages(refId: string) {
-        const { rootMsgLaanaId, currentMsgId } = this.laana.utils.msg.decodeLaanaForwardMsgRefId(refId);
+        const { rootMsgLaanaId, currentMsgId } = this.laana.utils.msg.decodeLaanaForwardedMsgRefId(refId);
         const decodedRootMsgId = this.laana.utils.msg.decodeLaanaMsgId(rootMsgLaanaId);
         const rawForwardedMessages = await this.core.apis.MsgApi.getMultiMsg(
             {
