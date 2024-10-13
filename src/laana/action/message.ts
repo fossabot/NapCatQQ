@@ -11,52 +11,52 @@ export class LaanaMessageActionImpl {
     ) {}
 
     handler: LaanaActionHandler = {
-        sendMessage: async (params) => {
-            return { msgId: await this.sendMessage(params.message!, params.targetPeer!) };
+        sendMessage: async ({ message, targetPeer }) => {
+            return { msgId: await this.sendMessage(message!, targetPeer!) };
         },
 
-        getMessage: async (params) => {
-            return { message: await this.getMessage(params.msgId) };
+        getMessage: async ({ msgId }) => {
+            return { message: await this.getMessage(msgId) };
         },
 
-        getMessages: async (params) => {
-            if (params.msgIds.length === 0) {
+        getMessages: async ({ msgIds }) => {
+            if (msgIds.length === 0) {
                 throw new Error('消息 ID 列表不能为空');
             }
-            return { messages: await this.getMessages(params.msgIds) };
+            return { messages: await this.getMessages(msgIds) };
         },
 
-        getForwardedMessages: async (params) => {
+        getForwardedMessages: async ({ refId }) => {
             return {
                 forwardMessage: {
-                    refId: params.refId,
-                    messages: await this.getForwardedMessages(params.refId)
+                    refId,
+                    messages: await this.getForwardedMessages(refId)
                 }
             };
         },
 
-        getHistoryMessages: async (params) => {
-            return { messages: await this.getHistoryMessages(params.targetPeer!, params.lastMsgId, params.count) };
+        getHistoryMessages: async ({ targetPeer, lastMsgId, count }) => {
+            return { messages: await this.getHistoryMessages(targetPeer!, lastMsgId!, count) };
         },
 
-        withdrawMessage: async (params) => {
-            await this.withdrawMessage(params.msgId);
+        withdrawMessage: async ({ msgId }) => {
+            await this.withdrawMessage(msgId);
             return { success: true };
         },
 
-        markPeerMessageAsRead: async (params) => {
-            await this.markPeerMessageAsRead(params.peer!);
+        markPeerMessageAsRead: async ({ peer }) => {
+            await this.markPeerMessageAsRead(peer!);
             return { success: true };
         },
 
-        forwardMessage: async (params) => {
-            if (params.msgIds.length === 0) {
+        forwardMessage: async ({ msgIds, targetPeer, operation }) => {
+            if (msgIds.length === 0) {
                 throw new Error('消息 ID 列表不能为空');
             }
-            if (params.operation === ForwardMessagePing_Operation.AS_SINGLETONS) {
-                await this.forwardMessageAsSingletons(params.msgIds, params.targetPeer!);
+            if (operation === ForwardMessagePing_Operation.AS_SINGLETONS) {
+                await this.forwardMessageAsSingletons(msgIds, targetPeer!);
             } else {
-                await this.forwardMessageAsPacked(params.msgIds, params.targetPeer!);
+                await this.forwardMessageAsPacked(msgIds, targetPeer!);
             }
             return { success: true };
         },
