@@ -92,8 +92,9 @@ export class LaanaFileUtils {
         if (stat.isFile()) {
             await fsPromises.unlink(cachePath);
         } else if (stat.isSymbolicLink()) {
+            const originalPath = await fsPromises.readlink(cachePath);
             await fsPromises.unlink(cachePath);
-            await fsPromises.unlink(await fsPromises.readlink(cachePath));
+            await fsPromises.unlink(originalPath);
         } else {
             throw Error('不支持的缓存类型');
         }
